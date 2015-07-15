@@ -21,13 +21,14 @@ import java.util.Random;
 import java.util.Map.Entry;
 
 import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.opendaylight.lispflowmapping.implementation.authentication.LispAuthenticationUtil;
 import org.opendaylight.lispflowmapping.implementation.config.ConfigIni;
-import org.opendaylight.lispflowmapping.implementation.dao.HashMapDb;
 import org.opendaylight.lispflowmapping.implementation.dao.MappingServiceKeyUtil;
 import org.opendaylight.lispflowmapping.implementation.util.DAOMappingUtil;
 import org.opendaylight.lispflowmapping.implementation.util.LispAFIConvertor;
 import org.opendaylight.lispflowmapping.implementation.util.MapNotifyBuilderHelper;
+import org.opendaylight.lispflowmapping.inmemorydb.HashMapDb;
 import org.opendaylight.lispflowmapping.interfaces.dao.ILispDAO;
 import org.opendaylight.lispflowmapping.interfaces.dao.IMappingServiceKey;
 import org.opendaylight.lispflowmapping.interfaces.dao.MappingEntry;
@@ -114,7 +115,8 @@ public class MapServer extends AbstractLispComponent implements IMapServerAsync 
 
         builder.setEidRecord(new ArrayList<org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.eidrecords.EidRecord>());
         LispAddressContainer container = eidRecord.getLispAddressContainer();
-        builder.getEidRecord().add(new EidRecordBuilder().setMask((short) eidRecord.getMaskLength()).setLispAddressContainer(container).build());
+        short mask = (short) eidRecord.getMaskLength();
+        builder.getEidRecord().add(new EidRecordBuilder().setMask(mask).setLispAddressContainer(container).build());
 
         builder.setItrRloc(new ArrayList<ItrRloc>());
         builder.getItrRloc().add(new ItrRlocBuilder().setLispAddressContainer(LispAFIConvertor.toContainer(getLocalAddress())).build());
@@ -144,9 +146,7 @@ public class MapServer extends AbstractLispComponent implements IMapServerAsync 
                 }
                 boolean mappingChanged = saveRlocs(eidRecord, smr);
                 if (smr && mappingChanged) {
-                    HashSet<MappingServiceSubscriberRLOC> subscribers = getSubscribers(eidRecord.getLispAddressContainer(),
-                            eidRecord.getMaskLength());
-                    handleSmr(eidRecord, subscribers, callback);
+                    sendSmrs(eidRecord, callback);
                 }
             }
             if (!failed) {
@@ -298,6 +298,26 @@ public class MapServer extends AbstractLispComponent implements IMapServerAsync 
         }
     }
 
+    private void sendSmrs(EidToLocatorRecord record, IMapNotifyHandler callback) {
+        LispAddressContainer eid = record.getLispAddressContainer();
+        HashSet<MappingServiceSubscriberRLOC> subscribers;
+
+        subscribers = getSubscribers(eid, record.getMaskLength());
+        handleSmr(record, subscribers, callback);
+
+        // For SrcDst LCAF also send SMRs to Dst prefix
+        if (eid.getAddress() instanceof LcafSourceDest) {
+            LispAddressContainer dstAddr = LispAFIConvertor.toContainer(getDstForLcafSrcDst(eid));
+            short dstMask = getDstMaskForLcafSrcDst(eid);
+            subscribers = getSubscribers(dstAddr, dstMask);
+            EidToLocatorRecord newRecord = new EidToLocatorRecordBuilder().setAction(record.getAction()).
+                    setAuthoritative(record.isAuthoritative()).setLocatorRecord(record.getLocatorRecord()).
+                    setMapVersion(record.getMapVersion()).setRecordTtl(record.getRecordTtl()).
+                    setLispAddressContainer(dstAddr).setMaskLength(dstMask).build();
+            handleSmr(newRecord, subscribers, callback);
+        }
+    }
+
     private void handleSmr(EidToLocatorRecord record, HashSet<MappingServiceSubscriberRLOC> subscribers,
             IMapNotifyHandler callback) {
         if (subscribers == null) {
@@ -313,7 +333,7 @@ public class MapServer extends AbstractLispComponent implements IMapServerAsync 
                 try {
                     callback.handleSMR(mapRequest, rloc.getSrcRloc());
                 } catch (Exception e) {
-                    LOG.error("Errors encountered while handling SMR:" + e.getStackTrace());
+                    LOG.error("Errors encountered while handling SMR:" + ExceptionUtils.getStackTrace(e));
                 }
             }
         }

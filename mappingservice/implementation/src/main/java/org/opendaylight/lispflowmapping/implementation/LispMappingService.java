@@ -20,9 +20,9 @@ import org.opendaylight.controller.sal.binding.api.NotificationListener;
 import org.opendaylight.controller.sal.binding.api.NotificationService;
 import org.opendaylight.controller.sal.binding.api.RpcProviderRegistry;
 import org.opendaylight.lispflowmapping.implementation.config.ConfigIni;
-import org.opendaylight.lispflowmapping.implementation.dao.HashMapDb;
 import org.opendaylight.lispflowmapping.implementation.dao.MappingServiceKey;
 import org.opendaylight.lispflowmapping.implementation.dao.MappingServiceNoMaskKey;
+import org.opendaylight.lispflowmapping.implementation.lisp.AbstractLispComponent;
 import org.opendaylight.lispflowmapping.implementation.lisp.MapResolver;
 import org.opendaylight.lispflowmapping.implementation.lisp.MapServer;
 import org.opendaylight.lispflowmapping.implementation.mdsal.AuthenticationKeyDataListener;
@@ -121,7 +121,7 @@ public class LispMappingService implements IFlowMapping, IFlowMappingShell, Bind
         LfmMappingDatabaseRpc mappingDbProviderRpc = new LfmMappingDatabaseRpc(dataBrokerService);
         lfmDbRpc = rpcRegistry.addRpcImplementation(LfmMappingDatabaseService.class, mappingDbProviderRpc);
         dsbe = new DataStoreBackEnd(dataBrokerService);
-        setLispDao(new HashMapDb());
+        restoreDaoFromDatastore();
     }
 
     @Override
@@ -157,10 +157,9 @@ public class LispMappingService implements IFlowMapping, IFlowMappingShell, Bind
         mapServer = new MapServer(dao);
     }
 
-    void setLispDao(ILispDAO dao) {
+    public void setLispDao(ILispDAO dao) {
         LOG.trace("LispDAO set in LispMappingService");
         basicInit(dao);
-        restoreDaoFromDatastore();
     }
 
     void unsetLispDao(ILispDAO dao) {
@@ -207,6 +206,20 @@ public class LispMappingService implements IFlowMapping, IFlowMappingShell, Bind
     public String printMappings() {
         final StringBuffer sb = new StringBuffer();
         sb.append("EID\tRLOCs\n");
+        final IRowVisitor innerVisitor = (new IRowVisitor() {
+            String lastKey = "";
+
+            public void visitRow(Object keyId, String valueKey, Object value) {
+                String key = keyId.getClass().getSimpleName() + "#" + keyId;
+                if (!lastKey.equals(key)) {
+                    sb.append(key + "\t");
+                }
+                if (!(valueKey.equals(AbstractLispComponent.LCAF_SRCDST_SUBKEY))) {
+                    sb.append(valueKey + "=" + value + "\t");
+                }
+                lastKey = key;
+            }
+        });
         lispDao.getAll(new IRowVisitor() {
             String lastKey = "";
 
@@ -215,7 +228,13 @@ public class LispMappingService implements IFlowMapping, IFlowMappingShell, Bind
                 if (!lastKey.equals(key)) {
                     sb.append("\n" + key + "\t");
                 }
-                sb.append(valueKey + "=" + value + "\t");
+                if (valueKey.equals(AbstractLispComponent.LCAF_SRCDST_SUBKEY)) {
+                    sb.append(valueKey + "= { ");
+                    ((ILispDAO)value).getAll(innerVisitor);
+                    sb.append("}\t");
+                } else {
+                    sb.append(valueKey + "=" + value + "\t");
+                }
                 lastKey = key;
             }
         });

@@ -9,10 +9,10 @@ package org.opendaylight.lispflowmapping.implementation.lisp;
 
 import java.util.HashSet;
 
-import org.opendaylight.lispflowmapping.implementation.dao.HashMapDb;
 import org.opendaylight.lispflowmapping.implementation.dao.MappingServiceKeyUtil;
 import org.opendaylight.lispflowmapping.implementation.util.LispAFIConvertor;
 import org.opendaylight.lispflowmapping.implementation.util.MaskUtil;
+import org.opendaylight.lispflowmapping.inmemorydb.HashMapDb;
 import org.opendaylight.lispflowmapping.interfaces.dao.ILispDAO;
 import org.opendaylight.lispflowmapping.interfaces.dao.IMappingServiceKey;
 import org.opendaylight.lispflowmapping.interfaces.dao.MappingEntry;
@@ -114,21 +114,21 @@ public abstract class AbstractLispComponent {
         return null;
     }
 
-    protected LispAFIAddress getSrcForLcafSrcDst(LispAddressContainer container) {
+    protected static LispAFIAddress getSrcForLcafSrcDst(LispAddressContainer container) {
         return LispAFIConvertor.toAFIfromPrimitive(((LcafSourceDest) container.getAddress()).getLcafSourceDestAddr().
                 getSrcAddress().getPrimitiveAddress());
     }
 
-    protected LispAFIAddress getDstForLcafSrcDst(LispAddressContainer container) {
+    protected static LispAFIAddress getDstForLcafSrcDst(LispAddressContainer container) {
         return LispAFIConvertor.toAFIfromPrimitive(((LcafSourceDest) container.getAddress()).getLcafSourceDestAddr().
                 getDstAddress().getPrimitiveAddress());
     }
 
-    protected short getSrcMaskForLcafSrcDst(LispAddressContainer container) {
+    protected static short getSrcMaskForLcafSrcDst(LispAddressContainer container) {
         return ((LcafSourceDest) container.getAddress()).getLcafSourceDestAddr().getSrcMaskLength();
     }
 
-    protected short getDstMaskForLcafSrcDst(LispAddressContainer container) {
+    protected static short getDstMaskForLcafSrcDst(LispAddressContainer container) {
         return ((LcafSourceDest) container.getAddress()).getLcafSourceDestAddr().getDstMaskLength();
     }
 
