@@ -159,6 +159,7 @@ public class LispMappingService implements IFlowMapping, IFlowMappingShell, Bind
 
     public void setLispDao(ILispDAO dao) {
         LOG.trace("LispDAO set in LispMappingService");
+        System.out.println(dao.getClass().getName());
         basicInit(dao);
     }
 

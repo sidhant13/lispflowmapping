@@ -27,7 +27,7 @@
                     </broker>
                     <dao>
                       <type xmlns:dao="urn:opendaylight:params:xml:ns:yang:controller:config:lfm:ms:dao">dao:ms-dao</type>
-                      <name>lfm-ms-inmemorydb</name>
+                      <name>lfm-ms-cassandradb</name>
                     </dao>
                 </module>
             </modules>

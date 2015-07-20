@@ -1,0 +1,5 @@
+Connected to cluster: Test Cluster
+Datatacenter: datacenter1; Host: /127.0.0.1; Rack: rack1
+ResultSet[ exhausted: true, Columns[]]
+ResultSet[ exhausted: true, Columns[]]
+ResultSet[ exhausted: true, Columns[]]

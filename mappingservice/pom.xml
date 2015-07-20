@@ -21,6 +21,7 @@
     <module>config</module>
     <module>clusterdao</module>
     <module>inmemorydb</module>
+    <module>cassandradb</module>
     <module>implementation</module>
     <module>southbound</module>
     <module>neutron</module>
