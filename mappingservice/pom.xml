@@ -62,7 +62,7 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-    </dependency>
+    </dependency>	
     <dependency>
       <groupId>junit-addons</groupId>
       <artifactId>junit-addons</artifactId>

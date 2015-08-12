@@ -259,6 +259,7 @@ public class MapServer extends AbstractLispComponent implements IMapServerAsync 
             ILispDAO srcDstDao = getOrInstantiateSrcDstInnerDao(address, maskLen);
             srcDstDao.put(srcKey, new MappingEntry<String>(PASSWORD_SUBKEY, key));
         } else {
+
             dao.put(mappingServiceKey, new MappingEntry<String>(PASSWORD_SUBKEY, key));
         }
     }

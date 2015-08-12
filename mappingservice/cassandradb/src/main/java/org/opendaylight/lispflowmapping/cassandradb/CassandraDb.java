@@ -8,153 +8,228 @@
 
 package org.opendaylight.lispflowmapping.cassandradb;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
 
+import org.opendaylight.lispflowmapping.cassandradb.mappings.LispmappingsIpv4;
+import org.opendaylight.lispflowmapping.cassandradb.mappings.LispmappingsIpv6;
+import org.opendaylight.lispflowmapping.cassandradb.mappings.LocatorRecordIp;
+import org.opendaylight.lispflowmapping.cassandradb.mappings.LocatorRecordMac;
+import org.opendaylight.lispflowmapping.cassandradb.mappings.RlocGroup;
+import org.opendaylight.lispflowmapping.cassandradb.setup.CassandraDbSetup;
+import org.opendaylight.lispflowmapping.cassandradb.util.LispAddressParseUtil;
 import org.opendaylight.lispflowmapping.interfaces.dao.ILispDAO;
 import org.opendaylight.lispflowmapping.interfaces.dao.IRowVisitor;
 import org.opendaylight.lispflowmapping.interfaces.dao.MappingEntry;
 import org.opendaylight.lispflowmapping.interfaces.dao.MappingServiceRLOCGroup;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+//import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.lispaddress.LispAddressContainer;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.lispaddress.lispaddresscontainer.Address;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.lispaddress.lispaddresscontainer.address.Ipv4;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.lispaddress.lispaddresscontainer.address.Ipv6;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.lispaddress.lispaddresscontainer.address.Mac;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.locatorrecords.LocatorRecord;
 
-import com.datastax.driver.core.Cluster;
-//import com.datastax.driver.core.Host;
-//import com.datastax.driver.core.Metadata;
-import com.datastax.driver.core.Session;
+import org.opendaylight.lispflowmapping.interfaces.dao.IMappingServiceKey;
 
-public class CassandraDb implements ILispDAO, AutoCloseable//, ICassandraSetup
-{
+public class CassandraDb extends CassandraDbSetup implements ILispDAO{
 
-    protected static final Logger LOG = LoggerFactory.getLogger(CassandraDb.class);
-    private static String methodname;
-    private ConcurrentMap<Object, ConcurrentMap<String, Object>> data = new ConcurrentHashMap<Object, ConcurrentMap<String, Object>>();
-    private TimeUnit timeUnit = TimeUnit.SECONDS;
-    private int recordTimeOut = 240;
+	@Override
+	public void put(Object key, MappingEntry<?>... values) {
 
-	private Cluster cluster;
-    private Session session;
-    private static String defaultLocalAddress="127.0.0.1";
-
-    public CassandraDb() {
-		LOG.info("CassandraDb configured");
-		//connect();
+        for (MappingEntry<?> entry : values) {
+            if(entry.getKey().equals(PASSWORD_SUBKEY)){
+            	putAuthenticationKey(key, entry.getValue());
+            }
+            if(entry.getKey().equals(ADDRESS_SUBKEY)){
+            	putMapping(key, entry.getValue());
+            }
+        }
 	}
 
-    @Override
-    public void put(Object key, MappingEntry<?>... values) {
-        if (!data.containsKey(key)) {
-            data.put(key, new ConcurrentHashMap<String, Object>());
+	private void putMapping(Object key, Object value) {
+	     System.out.println(Thread.currentThread().getStackTrace()[1].getMethodName());
+
+		IMappingServiceKey explicitKey = ((IMappingServiceKey) key);
+        Address address = explicitKey.getEID().getAddress();
+        int mask= explicitKey.getMask();
+
+        RlocGroup rlocGroup = new RlocGroup();
+	    if(value instanceof MappingServiceRLOCGroup){
+	    	 MappingServiceRLOCGroup rValue= (MappingServiceRLOCGroup) value;
+	    	 rlocGroup= rlocGroup.setAuthoritative(rValue.isAuthoritative())
+	    			 .setRegistereddate(rValue.getRegisterdDate())
+	    			 .setTtl(rValue.getTtl());
+
+	    	 List<?> locators = extractLocators(rValue.getRecords());
+	    	 for(Object locator : locators){
+	 	        if(locator instanceof LocatorRecordIp)
+	 	        	rlocGroup.setRloc_ip((LocatorRecordIp)locator);
+	 	        else if(locator instanceof LocatorRecordMac)
+		 	        rlocGroup.setRloc_mac((LocatorRecordMac)locator);
+	 		}
+	     }
+
+		if(address instanceof Ipv4)
+			putIpv4Mapping((Ipv4) address, rlocGroup, mask, value);
+		else if(address instanceof Ipv6)
+			putIpv6Mapping((Ipv6) address, rlocGroup, mask, value);
+
+	}
+
+	private void putIpv6Mapping(Ipv6 address, RlocGroup rlocGroup, int mask, Object value) {
+	     System.out.println(Thread.currentThread().getStackTrace()[1].getMethodName());
+
+	     LispAddressParseUtil util= new LispAddressParseUtil(address);
+	     LispmappingsIpv6 tableEntry= new LispmappingsIpv6().setPrefix(util.getIpv6prefix())
+	    		 .setSubprefix(util.getIpv6suffix())
+	    		 .setMask(mask)
+	    		 .setAfi(util.getAfi())
+	    		 .setAddress(rlocGroup);
+
+	     System.out.println(tableEntry.toString());
+	     mapperLispMappingsv6.save(tableEntry);
+	}
+
+	private void putIpv4Mapping(Ipv4 address, RlocGroup rlocGroup, int mask, Object value) {
+	     System.out.println(Thread.currentThread().getStackTrace()[1].getMethodName());
+
+	     LispAddressParseUtil util= new LispAddressParseUtil(address);
+	     LispmappingsIpv4 tableEntry= new LispmappingsIpv4().setPrefix(util.getPrefix())
+	    		 .setSubprefix(util.getSuffix())
+	    		 .setMask(mask)
+	    		 .setAfi(util.getAfi())
+	    		 .setAddress(rlocGroup);
+	     System.out.println(tableEntry.toString());
+	     mapperLispMappingsv4.save(tableEntry);
+	}
+
+	private List<?> extractLocators(List<LocatorRecord> records) {
+		List<Object> locators = new ArrayList<>();
+		for(LocatorRecord value : records){
+	        Address address = value.getLispAddressContainer().getAddress();
+
+	        if((address instanceof Ipv4) || (address instanceof Ipv6))
+	        	locators.add(new LocatorRecordIp(value));
+	        if((address instanceof Mac))
+	        	locators.add(new LocatorRecordMac(value));
+		}
+		return locators;
+	}
+
+
+
+	private void putAuthenticationKey(Object key, Object value) {
+
+		IMappingServiceKey explicitKey = ((IMappingServiceKey) key);
+        Address address = explicitKey.getEID().getAddress();
+        int mask= explicitKey.getMask();
+
+		if(address instanceof Ipv4)
+			putIpv4AuthenticationKey((Ipv4) address, mask, value);
+		else if(address instanceof Ipv6)
+			putIpv6AuthenticationKey((Ipv6) address, mask, value);
+
+	}
+
+	private void putIpv4AuthenticationKey(Ipv4 address,int mask, Object value) {
+	     System.out.println(Thread.currentThread().getStackTrace()[1].getMethodName());
+
+	     LispAddressParseUtil util= new LispAddressParseUtil(address);
+	     session.execute(insertIpv4KeyStatement.bind(
+	    		 	util.getPrefix(),
+	    		 	util.getSuffix(),
+	    		 	util.getAfi(),
+	    		 	mask,
+	    		 	(String) value
+	    		 ));
+	}
+
+	private void putIpv6AuthenticationKey(Ipv6 address, int mask, Object value) {
+	     System.out.println(Thread.currentThread().getStackTrace()[1].getMethodName());
+
+	     LispAddressParseUtil util= new LispAddressParseUtil(address);
+	     session.execute(insertIpv6KeyStatement.bind(
+	    		 	util.getIpv6prefix(),
+	    		 	util.getIpv6suffix(),
+	    		 	util.getAfi(),
+	    		 	mask,
+	    		 	(String) value
+	    		 ));
+	}
+
+	@Override
+	public void removeSpecific(Object key, String valueKey) {
+        if(valueKey.equals(PASSWORD_SUBKEY)){
+        	removeAuthenticationKey(key);
         }
-        for (MappingEntry<?> entry : values) {
-            data.get(key).put(entry.getKey(), entry.getValue());
-        }
-    }
 
-    @Override
-    public Object getSpecific(Object key, String valueKey) {
-        Map<String, Object> keyToValues = data.get(key);
-        if (keyToValues == null) {
-            return null;
-        }
-        return keyToValues.get(valueKey);
-    }
+	}
 
-    @Override
-    public Map<String, Object> get(Object key) {
-        return data.get(key);
-    }
+	private void removeAuthenticationKey(Object key) {
 
-    @Override
-    public void getAll(IRowVisitor visitor) {
-        for (ConcurrentMap.Entry<Object, ConcurrentMap<String, Object>> keyEntry : data.entrySet()) {
-            for (Map.Entry<String, Object> valueEntry : keyEntry.getValue().entrySet()) {
-                visitor.visitRow(keyEntry.getKey(), valueEntry.getKey(), valueEntry.getValue());
-            }
-        }
-    }
+		IMappingServiceKey explicitKey = ((IMappingServiceKey) key);
+        Address address = explicitKey.getEID().getAddress();
+        int mask= explicitKey.getMask();
 
-    @Override
-    public void remove(Object key) {
-        data.remove(key);
-    }
+		if(address instanceof Ipv4)
+			removeIpv4AuthenticationKey((Ipv4) address, mask);
+		else if(address instanceof Ipv6)
+			removeIpv6AuthenticationKey((Ipv6) address, mask);
+	}
 
-    @Override
-    public void removeSpecific(Object key, String valueKey) {
-        if (data.containsKey(key) && data.get(key).containsKey(valueKey)) {
-            data.get(key).remove(valueKey);
-        }
-    }
+	private void removeIpv6AuthenticationKey(Ipv6 address, int mask) {
+	     System.out.println(Thread.currentThread().getStackTrace()[1].getMethodName());
 
-    @Override
-    public void removeAll() {
-        data.clear();
-    }
+	     LispAddressParseUtil util= new LispAddressParseUtil(address);
+	     session.execute(deleteIpv6KeyStatement.bind(
+	    		 	util.getIpv6prefix(),
+	    		 	util.getIpv6suffix()
+	    		 ));
+	}
 
-    public void cleanOld() {
-        getAll(new IRowVisitor() {
-            public void visitRow(Object keyId, String valueKey, Object value) {
-                if (value instanceof MappingServiceRLOCGroup) {
-                    MappingServiceRLOCGroup rloc = (MappingServiceRLOCGroup) value;
-                    if (isExpired(rloc)) {
-                        removeSpecific(keyId, valueKey);
-                    }
-                }
-            }
+	private void removeIpv4AuthenticationKey(Ipv4 address, int mask) {
+	     System.out.println(Thread.currentThread().getStackTrace()[1].getMethodName());
 
-            private boolean isExpired(MappingServiceRLOCGroup rloc) {
-                return System.currentTimeMillis() - rloc.getRegisterdDate().getTime() > TimeUnit.MILLISECONDS.convert(recordTimeOut, timeUnit);
-            }
-        });
-    }
+	     LispAddressParseUtil util= new LispAddressParseUtil(address);
+	     session.execute(deleteIpv4KeyStatement.bind(
+	    		 	util.getPrefix(),
+	    		 	util.getSuffix()
+	    		 ));
+	}
 
-/*
-    public void connect() {
-    	connect(defaultLocalAddress);
-    }
+	@Override
+	public Object getSpecific(Object key, String valueKey) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Map<String, Object> get(Object key) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void getAll(IRowVisitor visitor) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void remove(Object key) {
+		// TODO Auto-generated method stub
+
+	}
 
 
-    public void connect(String node) {
-    	//methodname = Thread.currentThread().getStackTrace()[1].getMethodName();LOG.info("methodname- " + methodname);
-    	//System.out.println("Connecting to Cassandra DB");
 
-    	cluster = Cluster.builder()
-              .addContactPoint(node)
-              .build();
-        Metadata metadata = cluster.getMetadata();
-        System.out.printf("Connected to cluster: %s\n", metadata.getClusterName());
-        for ( Host host : metadata.getAllHosts() ) {
-           System.out.printf("Datatacenter: %s; Host: %s; Rack: %s\n",
-                 host.getDatacenter(), host.getAddress(), host.getRack());
-        }
-        session = cluster.connect();
-     }
+	@Override
+	public void removeAll() {
+		// TODO Auto-generated method stub
 
+	}
 
-    public void setup() {
-    }
-*/
-    public TimeUnit getTimeUnit() {
-        return timeUnit;
-    }
-
-    public void setRecordTimeOut(int recordTimeOut) {
-        this.recordTimeOut = recordTimeOut;
-    }
-
-    public int getRecordTimeOut() {
-        return recordTimeOut;
-    }
-
-    public void setTimeUnit(TimeUnit timeUnit) {
-        this.timeUnit = timeUnit;
-    }
-
-    public void close() throws Exception {
-        data.clear();
-    }
 
 
 

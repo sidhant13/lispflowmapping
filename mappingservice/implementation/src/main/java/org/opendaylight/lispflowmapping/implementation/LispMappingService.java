@@ -205,6 +205,8 @@ public class LispMappingService implements IFlowMapping, IFlowMappingShell, Bind
     }
 
     public String printMappings() {
+	     System.out.println(Thread.currentThread().getStackTrace()[1].getMethodName());
+
         final StringBuffer sb = new StringBuffer();
         sb.append("EID\tRLOCs\n");
         final IRowVisitor innerVisitor = (new IRowVisitor() {
@@ -222,6 +224,7 @@ public class LispMappingService implements IFlowMapping, IFlowMappingShell, Bind
             }
         });
         lispDao.getAll(new IRowVisitor() {
+
             String lastKey = "";
 
             public void visitRow(Object keyId, String valueKey, Object value) {

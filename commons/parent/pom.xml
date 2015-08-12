@@ -50,6 +50,7 @@
     <xtend.dstdir>src/main/xtend-gen</xtend.dstdir>
     <yang.src.path>src/main/yang</yang.src.path>
     <yangtools.version>0.8.0-SNAPSHOT</yangtools.version>
+    <cassandra-driver.version>2.2.0-rc1</cassandra-driver.version>
   </properties>
 
   <dependencyManagement>

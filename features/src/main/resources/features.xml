@@ -68,6 +68,8 @@
         <feature version='${yangtools.version}'>odl-yangtools-binding</feature>
         <feature version='${yangtools.version}'>odl-yangtools-models</feature>
         <bundle>mvn:com.google.guava/guava/${guava.version}</bundle>
+        <bundle>mvn:com.datastax.cassandra/cassandra-driver-core/2.1.7</bundle>
+        <bundle>mvn:com.datastax.cassandra/cassandra-driver-mapping/2.1.7</bundle>
         <bundle>mvn:org.opendaylight.lispflowmapping/mappingservice.yangmodel/${lispflowmapping.version}</bundle>
         <bundle>mvn:org.opendaylight.lispflowmapping/mappingservice.api/${lispflowmapping.version}</bundle>
         <bundle>mvn:org.opendaylight.lispflowmapping/mappingservice.cassandradb/${lispflowmapping.version}</bundle>

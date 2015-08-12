@@ -6,7 +6,7 @@
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
-package org.opendaylight.lispflowmapping.cassandradb;
+package org.opendaylight.lispflowmapping.cassandradb.setup;
 
 public interface ICassandraSetup {
 
