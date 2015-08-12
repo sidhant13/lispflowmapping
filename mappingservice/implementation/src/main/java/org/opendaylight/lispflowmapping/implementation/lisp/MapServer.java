@@ -29,6 +29,7 @@ import org.opendaylight.lispflowmapping.implementation.util.DAOMappingUtil;
 import org.opendaylight.lispflowmapping.implementation.util.LispAFIConvertor;
 import org.opendaylight.lispflowmapping.implementation.util.MapNotifyBuilderHelper;
 import org.opendaylight.lispflowmapping.inmemorydb.HashMapDb;
+import org.opendaylight.lispflowmapping.implementation.util.MaskUtil;
 import org.opendaylight.lispflowmapping.interfaces.dao.ILispDAO;
 import org.opendaylight.lispflowmapping.interfaces.dao.IMappingServiceKey;
 import org.opendaylight.lispflowmapping.interfaces.dao.MappingEntry;
@@ -38,7 +39,6 @@ import org.opendaylight.lispflowmapping.interfaces.lisp.IMapNotifyHandler;
 import org.opendaylight.lispflowmapping.interfaces.lisp.IMapServerAsync;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.LispAFIAddress;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.MapRegister;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.MapRequest;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.eidrecords.EidRecordBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.eidtolocatorrecords.EidToLocatorRecord;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.eidtolocatorrecords.EidToLocatorRecordBuilder;
@@ -104,7 +104,7 @@ public class MapServer extends AbstractLispComponent implements IMapServerAsync 
         return null;
     }
 
-    private static MapRequest buildSMR(EidToLocatorRecord eidRecord) {
+    private static MapRequestBuilder buildSMR(LispAddressContainer srcEid) {
         MapRequestBuilder builder = new MapRequestBuilder();
         builder.setAuthoritative(false);
         builder.setMapDataPresent(false);
@@ -113,21 +113,13 @@ public class MapServer extends AbstractLispComponent implements IMapServerAsync 
         builder.setSmr(true);
         builder.setSmrInvoked(false);
 
-        builder.setEidRecord(new ArrayList<org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.eidrecords.EidRecord>());
-        LispAddressContainer container = eidRecord.getLispAddressContainer();
-        short mask = (short) eidRecord.getMaskLength();
-        builder.getEidRecord().add(new EidRecordBuilder().setMask(mask).setLispAddressContainer(container).build());
-
-
+        builder.setSourceEid(new SourceEidBuilder().setLispAddressContainer(srcEid).build());
         builder.setItrRloc(new ArrayList<ItrRloc>());
         builder.getItrRloc().add(new ItrRlocBuilder().setLispAddressContainer(LispAFIConvertor.toContainer(getLocalAddress())).build());
-
         builder.setMapReply(null);
         builder.setNonce(new Random().nextLong());
 
-        // XXX For now we set source EID to queried EID...
-        builder.setSourceEid(new SourceEidBuilder().setLispAddressContainer(container).build());
-        return builder.build();
+        return builder;
     }
 
     public void handleMapRegister(MapRegister mapRegister, boolean smr, IMapNotifyHandler callback) {
@@ -174,6 +166,8 @@ public class MapServer extends AbstractLispComponent implements IMapServerAsync 
                 }
                 rlocGroups.get(subkey).addRecord(locatorRecord);
             }
+        } else {
+            rlocGroups.put(ADDRESS_SUBKEY, new MappingServiceRLOCGroup(eidRecord.getRecordTtl(), eidRecord.getAction(), eidRecord.isAuthoritative()));
         }
         List<MappingEntry<MappingServiceRLOCGroup>> entries = new ArrayList<>();
         for (String subkey : rlocGroups.keySet()) {
@@ -325,15 +319,21 @@ public class MapServer extends AbstractLispComponent implements IMapServerAsync 
         if (subscribers == null) {
             return;
         }
-        MapRequest mapRequest = buildSMR(record);
-        LOG.trace("Built SMR packet: " + mapRequest.toString());
-        for (MappingServiceSubscriberRLOC rloc : subscribers) {
-            if (rloc.timedOut()) {
-                LOG.trace("Lazy removing expired subscriber entry " + rloc.toString());
-                subscribers.remove(rloc);
+        MapRequestBuilder mrb = buildSMR(record.getLispAddressContainer());
+        LOG.trace("Built SMR packet: " + mrb.build().toString());
+        for (MappingServiceSubscriberRLOC subscriber : subscribers) {
+            if (subscriber.timedOut()) {
+                LOG.trace("Lazy removing expired subscriber entry " + subscriber.toString());
+                subscribers.remove(subscriber);
             } else {
                 try {
-                    callback.handleSMR(mapRequest, rloc.getSrcRloc());
+                    // The address stored in the SMR's EID record is used as Source EID in the SMR-invoked Map-Request. To
+                    // ensure consistent behavior it is set to the value used to originally request a given mapping
+                    mrb.setEidRecord(new ArrayList<org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.eidrecords.EidRecord>());
+                    mrb.getEidRecord().add(new EidRecordBuilder()
+                                .setMask((short)MaskUtil.getMaxMask(LispAFIConvertor.toAFI(subscriber.getSrcEid())))
+                                .setLispAddressContainer(subscriber.getSrcEid()).build());
+                    callback.handleSMR(mrb.build(), subscriber.getSrcRloc());
                 } catch (Exception e) {
                     LOG.error("Errors encountered while handling SMR:" + ExceptionUtils.getStackTrace(e));
                 }
