@@ -14,11 +14,11 @@ import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -271,11 +271,10 @@ public class MapServer extends AbstractLispComponent implements IMapServerAsync 
             mapping = DAOMappingUtil.getMappingForEid(LispAFIConvertor.toAFI(address), maskLen, db);
         }
         if (smr) {
-            HashSet<MappingServiceSubscriberRLOC> subscribers = getSubscribers(address, maskLen);
             // mapping is removed before first SMR is sent to avoid inconsistent replies
             removeMappingRlocs(mapping, db);
-            handleSmr(new EidToLocatorRecordBuilder().setLispAddressContainer(address).
-                    setMaskLength((short) maskLen).build(), subscribers, callback);
+            sendSmrs(new EidToLocatorRecordBuilder().setLispAddressContainer(address).
+                    setMaskLength((short) maskLen).build(), callback);
             db.removeSpecific(mapping.getKey(), SUBSCRIBERS_SUBKEY);
         } else {
             removeMappingRlocs(mapping, db);
@@ -296,7 +295,7 @@ public class MapServer extends AbstractLispComponent implements IMapServerAsync 
 
     private void sendSmrs(EidToLocatorRecord record, IMapNotifyHandler callback) {
         LispAddressContainer eid = record.getLispAddressContainer();
-        HashSet<MappingServiceSubscriberRLOC> subscribers;
+        Set<MappingServiceSubscriberRLOC> subscribers;
 
         subscribers = getSubscribers(eid, record.getMaskLength());
         handleSmr(record, subscribers, callback);
@@ -314,7 +313,7 @@ public class MapServer extends AbstractLispComponent implements IMapServerAsync 
         }
     }
 
-    private void handleSmr(EidToLocatorRecord record, HashSet<MappingServiceSubscriberRLOC> subscribers,
+    private void handleSmr(EidToLocatorRecord record, Set<MappingServiceSubscriberRLOC> subscribers,
             IMapNotifyHandler callback) {
         if (subscribers == null) {
             return;
@@ -341,7 +340,7 @@ public class MapServer extends AbstractLispComponent implements IMapServerAsync 
         }
         IMappingServiceKey key = MappingServiceKeyUtil.generateMappingServiceKey(record.getLispAddressContainer(),
                 record.getMaskLength());
-        dao.put(key, new MappingEntry<HashSet<MappingServiceSubscriberRLOC>>(SUBSCRIBERS_SUBKEY, subscribers));
+        dao.put(key, new MappingEntry<Set<MappingServiceSubscriberRLOC>>(SUBSCRIBERS_SUBKEY, subscribers));
     }
 
     public boolean shouldOverwrite() {

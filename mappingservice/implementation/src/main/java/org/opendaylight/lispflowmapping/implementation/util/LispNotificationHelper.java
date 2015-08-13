@@ -23,6 +23,8 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.lispaddress.lispaddresscontainer.address.distinguishedname.DistinguishedName;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.lispaddress.lispaddresscontainer.address.lcafkeyvalue.LcafKeyValueAddressAddr;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.lispsimpleaddress.PrimitiveAddress;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.mapnotifynotification.MapNotify;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.mapnotifynotification.MapNotifyBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.mapregisternotification.MapRegister;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.mapregisternotification.MapRegisterBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.mapreplynotification.MapReply;
@@ -33,6 +35,7 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.transportaddress.TransportAddressBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.mapping.database.rev150314.EidUri;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.mapping.database.rev150314.MappingOrigin;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.mapping.database.rev150314.SiteId;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.mapping.database.rev150314.db.instance.Mapping;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.mapping.database.rev150314.db.instance.MappingBuilder;
 import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.inet.types.rev100924.IpAddress;
@@ -48,6 +51,12 @@ public class LispNotificationHelper {
                 .setEidToLocatorRecord(mapRegister.getEidToLocatorRecord()).setKeyId(mapRegister.getKeyId()).setNonce(mapRegister.getNonce())
                 .setProxyMapReply(mapRegister.isProxyMapReply()).setWantMapNotify(mapRegister.isWantMapNotify())
                 .setXtrSiteIdPresent(mapRegister.isXtrSiteIdPresent()).setXtrId(mapRegister.getXtrId()).setSiteId(mapRegister.getSiteId()).build();
+    }
+
+    public static MapNotify convertMapNotify(org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.MapNotify mapNotify) {
+        return new MapNotifyBuilder().setAuthenticationData(mapNotify.getAuthenticationData())
+                .setEidToLocatorRecord(mapNotify.getEidToLocatorRecord()).setKeyId(mapNotify.getKeyId()).setNonce(mapNotify.getNonce())
+                .setXtrSiteIdPresent(mapNotify.isXtrSiteIdPresent()).setXtrId(mapNotify.getXtrId()).setSiteId(mapNotify.getSiteId()).build();
     }
 
     public static MapRequest convertMapRequest(org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.MapRequest mapRequest) {
@@ -140,6 +149,7 @@ public class LispNotificationHelper {
             mb.setEid(new EidUri(LispAddressStringifier.getURIString(
                     record.getLispAddressContainer(), record.getMaskLength())));
             mb.setOrigin(MappingOrigin.Southbound);
+            mb.setSiteId(getSiteId(mapRegisterNotification.getMapRegister()));
             mb.setRecordTtl(record.getRecordTtl());
             mb.setMaskLength(record.getMaskLength());
             mb.setMapVersion(record.getMapVersion());
@@ -150,5 +160,16 @@ public class LispNotificationHelper {
             mappings.add(mb.build());
         }
         return mappings;
+    }
+
+    public static List<SiteId> getSiteId(MapRegister mapRegister) {
+        if (mapRegister.isXtrSiteIdPresent()) {
+            List<SiteId> siteIds = new ArrayList<SiteId>();
+            SiteId siteId = new SiteId(mapRegister.getSiteId());
+            siteIds.add(siteId);
+            return siteIds;
+        } else {
+            return null;
+        }
     }
 }

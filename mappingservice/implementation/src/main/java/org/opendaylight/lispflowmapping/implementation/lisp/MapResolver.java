@@ -9,9 +9,9 @@
 package org.opendaylight.lispflowmapping.implementation.lisp;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.opendaylight.lispflowmapping.implementation.config.ConfigIni;
@@ -35,12 +35,15 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.lcaftrafficengineeringaddress.Hops;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.lispaddress.LispAddressContainer;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.lispaddress.lispaddresscontainer.address.LcafTrafficEngineering;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.lispaddress.lispaddresscontainer.address.No;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.locatorrecords.LocatorRecord;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.locatorrecords.LocatorRecordBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.mapreplymessage.MapReplyBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.maprequest.ItrRloc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.Sets;
 
 public class MapResolver extends AbstractLispComponent implements IMapResolverAsync {
 
@@ -92,12 +95,12 @@ public class MapResolver extends AbstractLispComponent implements IMapResolverAs
             if (locators != null && locators.size() > 0) {
                 List<ItrRloc> itrRlocs = request.getItrRloc();
                 addLocatorGroups(recordBuilder, locators, itrRlocs);
-                if (itrRlocs != null && itrRlocs.size() > 0) {
+                if (srcEid != null && !(srcEid.getAddress() instanceof No) && itrRlocs != null && itrRlocs.size() > 0) {
                     LispAddressContainer itrRloc = itrRlocs.get(0).getLispAddressContainer();
                     MappingServiceSubscriberRLOC subscriberRloc = new MappingServiceSubscriberRLOC(itrRloc, srcEid);
-                    HashSet<MappingServiceSubscriberRLOC> subscribers = getSubscribers(mapping.getKey().getEID(), mapping.getKey().getMask());
+                    Set<MappingServiceSubscriberRLOC> subscribers = getSubscribers(mapping.getKey().getEID(), mapping.getKey().getMask());
                     if (subscribers == null) {
-                        subscribers = new HashSet<MappingServiceSubscriberRLOC>();
+                        subscribers = Sets.newConcurrentHashSet();
                     } else if (subscribers.contains(subscriberRloc)) {
                         /*
                          * If there is an entry already for this
@@ -111,7 +114,7 @@ public class MapResolver extends AbstractLispComponent implements IMapResolverAs
                                 mapping.getKey().getMask());
                         LOG.trace("Adding new subscriber: " + subscriberRloc.toString());
                         subscribers.add(subscriberRloc);
-                        dao.put(key, new MappingEntry<HashSet<MappingServiceSubscriberRLOC>>(SUBSCRIBERS_SUBKEY, subscribers));
+                        dao.put(key, new MappingEntry<Set<MappingServiceSubscriberRLOC>>(SUBSCRIBERS_SUBKEY, subscribers));
                     }
                 }
             } else {
