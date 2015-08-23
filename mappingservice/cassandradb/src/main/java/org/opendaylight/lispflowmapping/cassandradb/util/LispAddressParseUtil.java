@@ -10,6 +10,7 @@ package org.opendaylight.lispflowmapping.cassandradb.util;
 
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.lispaddress.lispaddresscontainer.address.Ipv4;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.lispaddress.lispaddresscontainer.address.Ipv6;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.lispaddress.lispaddresscontainer.address.Mac;
 
 public class LispAddressParseUtil {
 
@@ -20,6 +21,7 @@ public class LispAddressParseUtil {
 	String hexsuffix;
 	long ipv6prefix;
 	long ipv6suffix;
+	String macEid;
 
 	public LispAddressParseUtil(Ipv6 address) {
 
@@ -33,6 +35,12 @@ public class LispAddressParseUtil {
 		afi= address.getIpv4Address().getAfi();
 		String stringIp= address.getIpv4Address().getIpv4Address().getValue();
 		parseIpv4Integer(stringIp);
+	}
+
+	public LispAddressParseUtil(Mac address) {
+
+		afi= address.getMacAddress().getAfi();
+		macEid= address.getMacAddress().getMacAddress().getValue();
 	}
 
 	private void parseIpv4Integer(String stringIp) {
@@ -51,7 +59,7 @@ public class LispAddressParseUtil {
 		indexOne= indexTwo;
 		suffix += Integer.valueOf(stringIp.substring(indexOne+1));
 
-		System.out.println(stringIp + " -> " + prefix + "," + suffix);
+		//System.out.println(stringIp + " -> " + prefix + "," + suffix);
 	}
 
 	private void parseIpv6Integer(String stringIp) {
@@ -87,7 +95,7 @@ public class LispAddressParseUtil {
 		ipv6prefix=Long.parseLong(hexprefix,16);
 		ipv6suffix=Long.parseLong(hexsuffix,16);
 
-		System.out.println(stringIp + " -> " + ipv6prefix + "," + ipv6suffix);
+		//System.out.println(stringIp + " -> " + ipv6prefix + "," + ipv6suffix);
 
 	}
 
@@ -110,5 +118,12 @@ public class LispAddressParseUtil {
 	public long getIpv6suffix() {
 		return ipv6suffix;
 	}
+
+	public String getMacEid() {
+		return macEid;
+	}
+
+
+
 
 }

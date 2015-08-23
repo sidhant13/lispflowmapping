@@ -42,6 +42,11 @@ public class MappingServiceRLOCGroup {
         return records;
     }
 
+    public MappingServiceRLOCGroup setRecords(List<LocatorRecord> locators){
+    	records= locators;
+    	return this;
+    }
+
     public MappingServiceRLOCGroup addRecord(LocatorRecord record) {
         this.records.add(record);
         return this;

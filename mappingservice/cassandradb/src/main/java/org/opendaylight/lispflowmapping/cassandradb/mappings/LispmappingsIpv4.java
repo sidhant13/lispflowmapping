@@ -8,19 +8,19 @@
 
 package org.opendaylight.lispflowmapping.cassandradb.mappings;
 
-import com.datastax.driver.mapping.annotations.Frozen;
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;
+//import com.datastax.driver.mapping.annotations.Frozen;
+//import com.datastax.driver.mapping.annotations.PartitionKey;
+//import com.datastax.driver.mapping.annotations.Table;
 
-@Table(keyspace = "lispdb02", name = "lispmappings_ipv4")
+//@Table(keyspace = "lispdb02", name = "lispmappings_ipv4")
 public class LispmappingsIpv4{
 
-    @PartitionKey
+//    @PartitionKey
     int prefix;
-    @PartitionKey
+//   @PartitionKey
     int subprefix;
 
-    @Frozen
+//    @Frozen
     RlocGroup address;
 
     int afi;

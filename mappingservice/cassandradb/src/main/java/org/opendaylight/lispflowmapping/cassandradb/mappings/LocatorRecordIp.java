@@ -16,9 +16,9 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.lispaddress.lispaddresscontainer.address.Ipv6;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.locatorrecords.LocatorRecord;
 
-import com.datastax.driver.mapping.annotations.UDT;
+//import com.datastax.driver.mapping.annotations.UDT;
 
-@UDT(keyspace = "lispdb02", name = "locatorrecord_ip")
+//@UDT(keyspace = "lispdb02", name = "locatorrecord_ip")
 public class LocatorRecordIp {
 
 	String name;

@@ -32,12 +32,12 @@ public class HashmapDb  implements ILispDAO, AutoCloseable//, ICassandraSetup
     private static HashmapDb hashmapInstance = null;
     private CassandraDb cassandraInstance = null;
 
-
+    private static boolean combined=false;
 
     public static HashmapDb getInstance(){
     	if(hashmapInstance==null)
     		hashmapInstance = new HashmapDb();
-		LOG.info("CassandraDb configured");
+		LOG.info("Hashmap configured");
 		return hashmapInstance;
 	}
 
@@ -55,31 +55,37 @@ public class HashmapDb  implements ILispDAO, AutoCloseable//, ICassandraSetup
         for (MappingEntry<?> entry : values) {
             data.get(key).put(entry.getKey(), entry.getValue());
         }
-        cassandraInstance.put(key,values);
+        if(combined)
+        	cassandraInstance.put(key,values);
     }
 
 
     @Override
     public Object getSpecific(Object key, String valueKey) {
-//	     System.out.println(Thread.currentThread().getStackTrace()[1].getMethodName());
 
         Map<String, Object> keyToValues = data.get(key);
         if (keyToValues == null) {
             return null;
         }
+        if(combined)
+        	System.out.println("1.getS " + (String)cassandraInstance.getSpecific(key, valueKey));
+        //System.out.println("2.getS " + (String)keyToValues.get(valueKey));
         return keyToValues.get(valueKey);
+        //return cassandraInstance.getSpecific(key, valueKey);
     }
 
     @Override
     public Map<String, Object> get(Object key) {
-//	     System.out.println(Thread.currentThread().getStackTrace()[1].getMethodName());
 
+        if(combined)
+    		System.out.println("1.get " + cassandraInstance.get(key));
+    	//System.out.println("2.get " + data.get(key));
         return data.get(key);
+    	//return cassandraInstance.get(key);
     }
 
     @Override
     public void getAll(IRowVisitor visitor) {
-//	     System.out.println(Thread.currentThread().getStackTrace()[1].getMethodName());
 
         for (ConcurrentMap.Entry<Object, ConcurrentMap<String, Object>> keyEntry : data.entrySet()) {
             for (Map.Entry<String, Object> valueEntry : keyEntry.getValue().entrySet()) {
@@ -98,7 +104,8 @@ public class HashmapDb  implements ILispDAO, AutoCloseable//, ICassandraSetup
         if (data.containsKey(key) && data.get(key).containsKey(valueKey)) {
             data.get(key).remove(valueKey);
         }
-        cassandraInstance.removeSpecific(key, valueKey);
+        if(combined)
+        	cassandraInstance.removeSpecific(key, valueKey);
     }
 
     @Override
@@ -124,7 +131,6 @@ public class HashmapDb  implements ILispDAO, AutoCloseable//, ICassandraSetup
             }
         });
     }
-
 
     public TimeUnit getTimeUnit() {
         return timeUnit;

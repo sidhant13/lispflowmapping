@@ -10,10 +10,10 @@ package org.opendaylight.lispflowmapping.cassandradb.mappings;
 
 import java.util.Date;
 
-import com.datastax.driver.mapping.annotations.Frozen;
+/*import com.datastax.driver.mapping.annotations.Frozen;
 import com.datastax.driver.mapping.annotations.UDT;
 
-@UDT(keyspace = "lispdb02", name = "rlocgroup")
+@UDT(keyspace = "lispdb02", name = "rlocgroup")*/
 public class RlocGroup {
 
 	int ttl;
@@ -24,10 +24,10 @@ public class RlocGroup {
 
 	int action;
 
-	@Frozen
+//	@Frozen
 	LocatorRecordIp rloc_ip;
 
-	@Frozen
+//	@Frozen
 	LocatorRecordMac rloc_mac;
 
 	public RlocGroup setTtl(int ttl) {

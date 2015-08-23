@@ -12,9 +12,9 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.lispaddress.lispaddresscontainer.address.Mac;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.locatorrecords.LocatorRecord;
 
-import com.datastax.driver.mapping.annotations.UDT;
+/*import com.datastax.driver.mapping.annotations.UDT;
 
-@UDT(keyspace = "lispdb02", name = "locatorrecord_mac")
+@UDT(keyspace = "lispdb02", name = "locatorrecord_mac")*/
 public class LocatorRecordMac {
 
 	String name;

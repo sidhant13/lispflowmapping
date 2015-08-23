@@ -1,5 +1,6 @@
 package org.opendaylight.controller.config.yang.config.lfm.ms.dao.cassandradb;
 
+//import org.opendaylight.lispflowmapping.cassandradb.CassandraDb;
 import org.opendaylight.lispflowmapping.cassandradb.HashmapDb;
 
 public class CassandradbModule extends org.opendaylight.controller.config.yang.config.lfm.ms.dao.cassandradb.AbstractCassandradbModule {
@@ -19,10 +20,14 @@ public class CassandradbModule extends org.opendaylight.controller.config.yang.c
     @Override
     public java.lang.AutoCloseable createInstance() {
         final HashmapDb hashmapdb = HashmapDb.getInstance();
-        hashmapdb.getCassandraInstance().connect();
-        hashmapdb.getCassandraInstance().setup();
         hashmapdb.setRecordTimeOut(getRecordTimeout());
         return hashmapdb;
+
+/*        final CassandraDb cassandradb = CassandraDb.getInstance();
+        cassandradb.connect();
+        cassandradb.setup();
+        cassandradb.setRecordTimeOut(getRecordTimeout());
+        return cassandradb;*/
     }
 
 }
