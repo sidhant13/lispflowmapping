@@ -1,5 +1,5 @@
 # lispflowmapping
-Forked from the Opendaylight lispflowmapping project, it replaces the storage of mappings from internally in Java collection to Cassandra database.
+Forked from the Opendaylight lispflowmapping project, it replaces the storage of mappings from internally in Java collection to Cassandra database. Only a new mapping_service.cassandradb project has been added over the base repository and changes made in the relevant configuration files.
 
 ## Setup
 1. To run the code and store the mappings in Cassandra, access to an instance of Cassandra is required. To install an instance locally, download and setup the distribution from [here](http://cassandra.apache.org/download/). The code was tested with the most recent stable release of the time, i.e. 2.1.9. However, it should also work fine with 2.2.x version.
