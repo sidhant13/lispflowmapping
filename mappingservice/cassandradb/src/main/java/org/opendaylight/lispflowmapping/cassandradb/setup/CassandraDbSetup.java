@@ -1,9 +1,10 @@
 /*
- * Copyright (c) 2014 Contextream, Inc. and others.  All rights reserved.
+ * Author: Sidhant Hasija
+ * Project: Lisp DB Intern Project
  *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License v1.0 which accompanies this distribution,
- * and is available at http://www.eclipse.org/legal/epl-v10.html
+ * 1. Connects to the Cassandra Instance, at the provided address or at the localhost
+ * 2. Prepares the various cql queries which will be used by the DAO in various read/write operations
+ * 3. Get the reference of Cassandra UDT into Java UserType object.
  */
 
 package org.opendaylight.lispflowmapping.cassandradb.setup;
@@ -13,11 +14,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.opendaylight.lispflowmapping.cassandradb.mappings.AbstractJavaUdtMapper;
-/*import org.opendaylight.lispflowmapping.cassandradb.mappings.LispmappingsIpv4;
-import org.opendaylight.lispflowmapping.cassandradb.mappings.LispmappingsIpv6;
-import com.datastax.driver.mapping.Mapper;
-import com.datastax.driver.mapping.MappingManager;*/
-//import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.UserType;
@@ -53,15 +49,12 @@ public class CassandraDbSetup implements ICassandraSetup{
     protected PreparedStatement deleteIpv6MappingStatement;
     protected PreparedStatement deleteMacMappingStatement;
     protected PreparedStatement getIpv4MappingStatement;
-    protected PreparedStatement getLpmIpv4MappingStatement;
 	protected PreparedStatement getIpv6MappingStatement;
 	protected PreparedStatement getLpmIpv6MappingStatement;
 	protected PreparedStatement getMacMappingStatement;
 	protected PreparedStatement getIpv6KeyStatement;
 	protected PreparedStatement getIpv4KeyStatement;
 	protected PreparedStatement getMacKeyStatement;
-	/*  protected Mapper<LispmappingsIpv6> mapperLispMappingsv6;
-    protected Mapper<LispmappingsIpv4> mapperLispMappingsv4;*/
 	protected static UserType rlocgroup;
 	protected static UserType locatorrecord_ip;
 	protected static UserType locatorrecord_mac;
@@ -90,12 +83,15 @@ public class CassandraDbSetup implements ICassandraSetup{
 
 	@Override
 	public void setup() {
-		CassandraDbSchemaSetup.createAll(session);
+		CassandraDbSchemaSetup.createAll(session);   //creates the datamodel
 		createPreparedStatements();
 		createUserTypes();
 		createMapperObjects();
 	}
 
+	/*
+	 * getting the reference of UDT's into Java objects.
+	 */
 	private void createUserTypes() {
 		udtCollection= new HashMap<String,UserType>();
 
@@ -130,6 +126,9 @@ public class CassandraDbSetup implements ICassandraSetup{
 		createGetMappingStatements();
 	}
 
+	/*
+	 * creating cql statements to delete the mappings from the three mapping tables.
+	 */
 	private void createDeleteMappingStatements() {
 
 		deleteIpv4MappingStatement = session.prepare(
@@ -151,6 +150,9 @@ public class CassandraDbSetup implements ICassandraSetup{
 			      "eid= ?;");
 	}
 
+	/*
+	 * creating cql statements to insert the mappings into the three mapping tables.
+	 */
 	private void createInsertMappingStatements() {
 
 		insertIpv4MappingStatement = session.prepare(
@@ -175,6 +177,9 @@ public class CassandraDbSetup implements ICassandraSetup{
 			      "VALUES (?, ?, ?, ?);");
 	}
 
+	/*
+	 * creating cql statements to insert the key into the three mapping tables.
+	 */
 	private void createInsertKeyStatements() {
 
 		insertIpv4KeyStatement = session.prepare(
@@ -199,7 +204,9 @@ public class CassandraDbSetup implements ICassandraSetup{
 			      "VALUES (?, ?, ?, ?);");
 	}
 
-
+	/*
+	 * creating cql statements to delete the key from the three mapping tables.
+	 */
 	private void createDeleteKeyStatements() {
 
 		deleteIpv4KeyStatement = session.prepare(
@@ -221,6 +228,9 @@ public class CassandraDbSetup implements ICassandraSetup{
 			      "eid= ?;");
 	}
 
+	/*
+	 * creating cql statements to retrieve the mappings from the three mapping tables.
+	 */
 	private void createGetKeyStatements() {
 
 		getIpv4KeyStatement = session.prepare(
@@ -242,6 +252,10 @@ public class CassandraDbSetup implements ICassandraSetup{
 			      "eid= ?;");
 	}
 
+
+	/*
+	 * creating cql statements to retrieve the mappings from the three mapping tables.
+	 */
 	private void createGetMappingStatements() {
 
 		getIpv4MappingStatement = session.prepare(

@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2014 Contextream, Inc. and others.  All rights reserved.
+ * Author: Sidhant Hasija
+ * Project: Lisp DB Intern Project
  *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License v1.0 which accompanies this distribution,
- * and is available at http://www.eclipse.org/legal/epl-v10.html
+ * 1. Uses the cassandra session object to create schema/ data model at the session instance.
+ * 2. The queries used in this can also be found at https://github.com/sidhant13/lispflowmapping/blob/master/resources/Cassandra_odl_2.cql
  */
-
 
 package org.opendaylight.lispflowmapping.cassandradb.setup;
 
@@ -25,11 +24,11 @@ public class CassandraDbSchemaSetup {
 
 	private static void createAddressDatetypes() {
 
-		session.execute("CREATE TYPE IF NOT EXISTS lispdb01.ipaddress("
+		session.execute("CREATE TYPE IF NOT EXISTS lispdb02.ipaddress("
 				+ "address inet,"
 				+ "afi int);");
 
-		session.execute("CREATE TYPE IF NOT EXISTS lispdb01.macaddress("
+		session.execute("CREATE TYPE IF NOT EXISTS lispdb02.macaddress("
 				+ "address text,"
 				+ "afi int);");
 
@@ -38,7 +37,7 @@ public class CassandraDbSchemaSetup {
 
 	private static void createRlocDatatypes() {
 
-		session.execute("CREATE TYPE IF NOT EXISTS lispdb01.locatorrecord("
+		session.execute("CREATE TYPE IF NOT EXISTS lispdb02.locatorrecord_ip("
 				+ "name text,"
 				+ "priority int,"
 				+ "weight int,"
@@ -47,31 +46,45 @@ public class CassandraDbSchemaSetup {
 				+ "locallocator boolean,"
 				+ "rlocprobed boolean,"
 				+ "routed boolean,"
-				+ "rloc_ip frozen<ipaddress>,"
-				+ "rloc_mac frozen<macaddress>,"
+				+ "address inet,"
+				+ "afi int"
 				+ ");");
 
-		session.execute("CREATE TYPE IF NOT EXISTS lispdb01.rlocgroup("
+		session.execute("CREATE TYPE IF NOT EXISTS lispdb02.locatorrecord_mac("
+				+ "name text,"
+				+ "priority int,"
+				+ "weight int,"
+				+ "multicastpriority int,"
+				+ "multicastweight int,"
+				+ "locallocator boolean,"
+				+ "rlocprobed boolean,"
+				+ "routed boolean,"
+				+ "address text,"
+				+ "afi int"
+				+ ");");
+
+		session.execute("CREATE TYPE IF NOT EXISTS lispdb02.rlocgroup("
 				+ "ttl int,"
 				+ "authoritative boolean,"
 				+ "registeredDate timestamp,"
 				+ "action int,"
-				+ "records frozen<locatorrecord>"
+				+ "rloc_ip list<frozen<locatorrecord_ip>>,"
+				+ "rloc_mac list<frozen<locatorrecord_mac>>"
 				+ ");");
 
-		System.out.println("Created locatorrecord and rlocgroup UDT...");
+		System.out.println("Created locatorrecords and rlocgroup UDT...");
 	}
 
 
 
 	private static void createKeyspace() {
 
-		session.execute("CREATE KEYSPACE IF NOT EXISTS lispdb01 WITH replication= {"
+		session.execute("CREATE KEYSPACE IF NOT EXISTS lispdb02 WITH replication= {"
 				+ "'class':'SimpleStrategy',"
 				+ "'replication_factor':1"
 				+ "	};");
 
-		System.out.println("Created Keyspace lispdb01...");
+		System.out.println("Created Keyspace lispdb02...");
 	}
 
 
@@ -79,12 +92,12 @@ public class CassandraDbSchemaSetup {
 
 	private static void createTables() {
 
-		session.execute("CREATE TABLE IF NOT EXISTS lispdb01.lispmappings_ipv4"
+		session.execute("CREATE TABLE IF NOT EXISTS lispdb02.lispmappings_ipv4"
 				+ "("
 				+ "prefix int,"
 				+ "subprefix int,"
-				+ "afi int,"
 				+ "mask int,"
+				+ "afi int,"
 				+ "authkey text,"
 				+ "address frozen<rlocgroup>,"
 				+ "PRIMARY KEY ((prefix),subprefix)"
@@ -92,12 +105,12 @@ public class CassandraDbSchemaSetup {
 				+ "WITH caching = { 'keys' : 'NONE', 'rows_per_partition' : '120' }"
 				+ "AND clustering order by (subprefix DESC);");
 
-		session.execute("CREATE TABLE IF NOT EXISTS lispdb01.lispmappings_ipv6"
+		session.execute("CREATE TABLE IF NOT EXISTS lispdb02.lispmappings_ipv6"
 				+ "("
-				+ "prefix int,"
-				+ "subprefix int,"
-				+ "afi int,"
+				+ "prefix bigint,"
+				+ "subprefix bigint,"
 				+ "mask int,"
+				+ "afi int,"
 				+ "authkey text,"
 				+ "address frozen<rlocgroup>,"
 				+ "PRIMARY KEY ((prefix),subprefix)"
@@ -105,11 +118,11 @@ public class CassandraDbSchemaSetup {
 				+ "WITH caching = { 'keys' : 'NONE', 'rows_per_partition' : '120' }"
 				+ "AND clustering order by (subprefix DESC);");
 
-		session.execute("CREATE TABLE IF NOT EXISTS lispdb01.lispmappings_mac"
+		session.execute("CREATE TABLE IF NOT EXISTS lispdb02.lispmappings_mac"
 				+ "("
 				+ "eid text,"
-				+ "afi int,"
 				+ "mask int,"
+				+ "afi int,"
 				+ "authkey text,"
 				+ "address frozen<rlocgroup>,"
 				+ "PRIMARY KEY (eid)"

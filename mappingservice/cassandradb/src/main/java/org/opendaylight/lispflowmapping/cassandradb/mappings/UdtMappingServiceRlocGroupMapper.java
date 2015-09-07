@@ -1,9 +1,8 @@
 /*
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Author: Sidhant Hasija
+ * Project: Lisp DB Intern Project
  *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License v1.0 which accompanies this distribution,
- * and is available at http://www.eclipse.org/legal/epl-v10.html
+ * 1. Convert the UDT value received from Cassandra into java object rloc_group
  */
 
 package org.opendaylight.lispflowmapping.cassandradb.mappings;
@@ -25,10 +24,8 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.lispaddress.lispaddresscontainer.address.mac.MacAddressBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.locatorrecords.LocatorRecord;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.locatorrecords.LocatorRecordBuilder;
-
 import com.datastax.driver.core.UDTValue;
-//import com.datastax.driver.core.UserType;
-//import com.datastax.driver.core.schemabuilder.UDTType;
+
 
 public class UdtMappingServiceRlocGroupMapper extends AbstractJavaUdtMapper{
 
@@ -38,7 +35,6 @@ public class UdtMappingServiceRlocGroupMapper extends AbstractJavaUdtMapper{
 		if(address==null){
 			return null;
 		}
-
 		MappingServiceRLOCGroup returnValue= new MappingServiceRLOCGroup(address.getInt("ttl"),
 				null, address.getBool("authoritative"));
 		returnValue.setRegisterdDate(address.getDate("registereddate"));
@@ -56,6 +52,9 @@ public class UdtMappingServiceRlocGroupMapper extends AbstractJavaUdtMapper{
 		return returnValue;
 	}
 
+	/*
+	 * convert the UDT locator_records into locator_records java object
+	 */
 	private static List<LocatorRecord> UdtLocatorMapper(List<UDTValue> listUdt) {
 
 		List<LocatorRecord> locators= new ArrayList<>();
@@ -78,6 +77,9 @@ public class UdtMappingServiceRlocGroupMapper extends AbstractJavaUdtMapper{
 		return locators;
 	}
 
+	/*
+	 * convert the mac UDT locator_records into locator_records java object
+	 */
 	private static LispAddressContainer macLispAddressContainerUdtMapper(UDTValue value) {
 
 		LispAddressContainerBuilder lacb= new LispAddressContainerBuilder();
@@ -99,6 +101,9 @@ public class UdtMappingServiceRlocGroupMapper extends AbstractJavaUdtMapper{
 		return null;
 	}
 
+	/*
+	 * convert the ip UDT locator_records into locator_records java object
+	 */
 	private static LispAddressContainer ipLispAddressContainerUdtMapper(UDTValue value) {
 
 		LispAddressContainerBuilder lacb= new LispAddressContainerBuilder();

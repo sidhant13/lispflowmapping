@@ -6,22 +6,21 @@
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
-package org.opendaylight.lispflowmapping.cassandradb.mappings;
+package org.opendaylight.lispflowmapping.cassandradb.mappings.old;
 
-/*import com.datastax.driver.mapping.annotations.Frozen;
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;*/
+//import com.datastax.driver.mapping.annotations.Frozen;
+//import com.datastax.driver.mapping.annotations.PartitionKey;
+//import com.datastax.driver.mapping.annotations.Table;
 
-//@Table(keyspace = "lispdb02", name = "lispmappings_ipv6")
-public class LispmappingsIpv6 {
+//@Table(keyspace = "lispdb02", name = "lispmappings_ipv4")
+public class LispmappingsIpv4{
 
-//	@PartitionKey
-    long prefix;
+//    @PartitionKey
+    int prefix;
+//   @PartitionKey
+    int subprefix;
 
-//	@PartitionKey
-    long subprefix;
-
-//	@Frozen
+//    @Frozen
     RlocGroup address;
 
     int afi;
@@ -36,41 +35,41 @@ public class LispmappingsIpv6 {
 				+ afi + ", authkey=" + authkey + ", mask=" + mask + "]";
 	}
 
-	public LispmappingsIpv6 setPrefix(long prefix) {
+	public LispmappingsIpv4 setPrefix(int prefix) {
 		this.prefix = prefix;
 		return this;
 	}
 
-	public LispmappingsIpv6 setSubprefix(long subprefix) {
+	public LispmappingsIpv4 setSubprefix(int subprefix) {
 		this.subprefix = subprefix;
 		return this;
 	}
 
-	public LispmappingsIpv6 setAddress(RlocGroup address) {
+	public LispmappingsIpv4 setAddress(RlocGroup address) {
 		this.address = address;
 		return this;
 	}
 
-	public LispmappingsIpv6 setAfi(int afi) {
+	public LispmappingsIpv4 setAfi(int afi) {
 		this.afi = afi;
 		return this;
 	}
 
-	public LispmappingsIpv6 setAuthkey(String authkey) {
+	public LispmappingsIpv4 setAuthkey(String authkey) {
 		this.authkey = authkey;
 		return this;
 	}
 
-	public LispmappingsIpv6 setMask(int mask) {
+	public LispmappingsIpv4 setMask(int mask) {
 		this.mask = mask;
 		return this;
 	}
 
-	public long getPrefix() {
+	public int getPrefix() {
 		return prefix;
 	}
 
-	public long getSubprefix() {
+	public int getSubprefix() {
 		return subprefix;
 	}
 
@@ -91,3 +90,4 @@ public class LispmappingsIpv6 {
 	}
 
 }
+

@@ -1,9 +1,9 @@
 /*
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Author: Sidhant Hasija
+ * Project: Lisp DB Intern Project
  *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License v1.0 which accompanies this distribution,
- * and is available at http://www.eclipse.org/legal/epl-v10.html
+ * 1. Abstract class for Java to UDT mapper and vice-versa.
+ *
  */
 
 package org.opendaylight.lispflowmapping.cassandradb.mappings;
@@ -23,6 +23,9 @@ public class AbstractJavaUdtMapper {
     protected static UserType locatorrecordMac;
     protected static String dbname;
 
+    /*
+     * store the reference for UDT retrieved while setting up the schema
+     */
 	public static void initialize(Map<String,UserType> udtCollection, String dbname){
 		rlocgroup= udtCollection.get(CUSTOM_RLOC);
 		locatorrecordIp= udtCollection.get(CUSTOM_LOCATOR_IP);

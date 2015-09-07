@@ -1,9 +1,9 @@
 /*
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Author: Sidhant Hasija
+ * Project: Lisp DB Intern Project
  *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License v1.0 which accompanies this distribution,
- * and is available at http://www.eclipse.org/legal/epl-v10.html
+ * 1. Implements all the ILispDao methods.
+ * 2. Extends the static CassandradbSetup class which connects and sets up the data model at the cassandra instance.
  */
 
 package org.opendaylight.lispflowmapping.cassandradb;
@@ -11,35 +11,21 @@ package org.opendaylight.lispflowmapping.cassandradb;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
-/*import org.opendaylight.lispflowmapping.cassandradb.mappings.LispmappingsIpv4;
-import org.opendaylight.lispflowmapping.cassandradb.mappings.LispmappingsIpv6;
-import org.opendaylight.lispflowmapping.cassandradb.mappings.LocatorRecordIp;
-import org.opendaylight.lispflowmapping.cassandradb.mappings.LocatorRecordMac;*/
 import org.opendaylight.lispflowmapping.cassandradb.mappings.MappingServiceRLOCGroupUDTMapper;
 import org.opendaylight.lispflowmapping.cassandradb.mappings.UdtMappingServiceRlocGroupMapper;
-//import org.opendaylight.lispflowmapping.cassandradb.mappings.RlocGroup;
 import org.opendaylight.lispflowmapping.cassandradb.setup.CassandraDbSetup;
 import org.opendaylight.lispflowmapping.cassandradb.util.LispAddressParseUtil;
 import org.opendaylight.lispflowmapping.interfaces.dao.ILispDAO;
 import org.opendaylight.lispflowmapping.interfaces.dao.IRowVisitor;
 import org.opendaylight.lispflowmapping.interfaces.dao.MappingEntry;
 import org.opendaylight.lispflowmapping.interfaces.dao.MappingServiceRLOCGroup;
-//import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.lispaddress.LispAddressContainer;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.lispaddress.lispaddresscontainer.Address;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.lispaddress.lispaddresscontainer.address.Ipv4;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.lispaddress.lispaddresscontainer.address.Ipv6;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.lispaddress.lispaddresscontainer.address.Mac;
-
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
-/*
-import com.datastax.driver.core.PreparedStatement;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.lispaddress.lispaddresscontainer.address.Mac;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.lfm.control.plane.rev150314.locatorrecords.LocatorRecord;
-*/
 import com.datastax.driver.core.UDTValue;
-
 import org.opendaylight.lispflowmapping.interfaces.dao.IMappingServiceKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,6 +44,9 @@ public class CassandraDb extends CassandraDbSetup implements ILispDAO,AutoClosea
 		return cassandraInstance;
 	}
 
+    /*
+     * Find the type of value passed(key/address/subscriber) and use the relevant functions to put the values.
+     */
 	@Override
 	public void put(Object key, MappingEntry<?>... values) {
 
@@ -71,6 +60,11 @@ public class CassandraDb extends CassandraDbSetup implements ILispDAO,AutoClosea
         }
 	}
 
+	/*
+	 * Find the type of key passed and accordingly used the relevant cql statement to
+	 * put mapping.
+	 * Use the Mapper class to convert the java object into a UDT.
+	 */
 	private void putMapping(Object key, Object value) {
 
 		IMappingServiceKey explicitKey = ((IMappingServiceKey) key);
@@ -124,6 +118,10 @@ public class CassandraDb extends CassandraDbSetup implements ILispDAO,AutoClosea
 	    		 ));
 	}
 
+	/*
+	 * Find the type of key passed and accordingly used the relevant cql statement to
+	 * put key.
+	 */
 	private void putAuthenticationKey(Object key, Object value) {
 
 		IMappingServiceKey explicitKey = ((IMappingServiceKey) key);
@@ -137,6 +135,7 @@ public class CassandraDb extends CassandraDbSetup implements ILispDAO,AutoClosea
 		else if(address instanceof Mac)
 			putMacAuthenticationKey((Mac) address, mask, value);
 	}
+
 
 	private void putMacAuthenticationKey(Mac address, int mask, Object value) {
 	     LispAddressParseUtil util= new LispAddressParseUtil(address);
@@ -170,6 +169,9 @@ public class CassandraDb extends CassandraDbSetup implements ILispDAO,AutoClosea
 	    		 ));
 	}
 
+    /*
+     * Find the type of value passed(key/address/subscriber) and use the relevant functions to delete the values.
+     */
 	@Override
 	public void removeSpecific(Object key, String valueKey) {
         if(valueKey.equals(PASSWORD_SUBKEY)){
@@ -180,6 +182,11 @@ public class CassandraDb extends CassandraDbSetup implements ILispDAO,AutoClosea
         }
 	}
 
+
+	/*
+	 * Find the type of key passed and accordingly used the relevant cql statement to
+	 * remove mapping.
+	 */
 	private void removeMapppingKey(Object key) {
 		IMappingServiceKey explicitKey = ((IMappingServiceKey) key);
         Address address = explicitKey.getEID().getAddress();
@@ -217,6 +224,10 @@ public class CassandraDb extends CassandraDbSetup implements ILispDAO,AutoClosea
 	    		 ));
 	}
 
+	/*
+	 * Find the type of key passed and accordingly used the relevant cql statement to
+	 * remove key.
+	 */
 	private void removeAuthenticationKey(Object key) {
 
 		IMappingServiceKey explicitKey = ((IMappingServiceKey) key);
@@ -254,6 +265,9 @@ public class CassandraDb extends CassandraDbSetup implements ILispDAO,AutoClosea
 	    		 ));
 	}
 
+    /*
+     * Find the type of value passed(key/address/subscriber) and use the relevant functions to get the values.
+     */
 	@Override
 	public Object getSpecific(Object key, String valueKey) {
 
@@ -269,6 +283,10 @@ public class CassandraDb extends CassandraDbSetup implements ILispDAO,AutoClosea
 		return null;
 	}
 
+	/*
+	 * Find the type of key passed and accordingly use the relevant cql statement to
+	 * get key.
+	 */
 	private Object getAuthenticationKey(Address address, int mask){
 
 		String gotSpecific="";
@@ -311,6 +329,11 @@ public class CassandraDb extends CassandraDbSetup implements ILispDAO,AutoClosea
 		return getMapping(address, mask, false);
 	}
 
+	/*
+	 * Find the type of key passed and accordingly use the relevant cql statement to
+	 * get mapping.
+	 * Transform the results obtained in UDTvalue form into RlocGroup object using the mapper class.
+	 */
 	private Object getMapping(Address address, int mask, boolean lpm){
 		UDTValue rlocGroupValue=null;
 
@@ -326,9 +349,9 @@ public class CassandraDb extends CassandraDbSetup implements ILispDAO,AutoClosea
 				MappingServiceRLOCGroup mapping= UdtMappingServiceRlocGroupMapper.getMappingServiceRlocGroup(rlocGroupValue);
 				return (Object) mapping;
 			}
-			else if(rlocGroupValue==null && lpm==false){
+			/*else if(rlocGroupValue==null && lpm==false){
 				getMapping(address, mask, true);
-			}
+			}*/
 			return null;
 		}
 
@@ -344,9 +367,9 @@ public class CassandraDb extends CassandraDbSetup implements ILispDAO,AutoClosea
 				MappingServiceRLOCGroup mapping= UdtMappingServiceRlocGroupMapper.getMappingServiceRlocGroup(rlocGroupValue);
 				return (Object) mapping;
 			}
-			else if(rlocGroupValue==null && lpm==false){
+			/*else if(rlocGroupValue==null && lpm==false){
 				getMapping(address, mask, true);
-			}
+			}*/
 			return null;
 		}
 
@@ -361,9 +384,9 @@ public class CassandraDb extends CassandraDbSetup implements ILispDAO,AutoClosea
 				MappingServiceRLOCGroup mapping= UdtMappingServiceRlocGroupMapper.getMappingServiceRlocGroup(rlocGroupValue);
 				return (Object) mapping;
 			}
-			else if(rlocGroupValue==null && lpm==false){
+			/*else if(rlocGroupValue==null && lpm==false){
 				getMapping(address, mask, true);
-			}
+			}*/
 			return null;
 		}
 

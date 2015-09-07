@@ -1,9 +1,8 @@
 /*
- * Copyright (c) 2014 Contextream, Inc. and others.  All rights reserved.
+ * Author: Sidhant Hasija
+ * Project: Lisp DB Intern Project
  *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License v1.0 which accompanies this distribution,
- * and is available at http://www.eclipse.org/legal/epl-v10.html
+ * 1. Utility class to parse the Ipv4 and Ipv6 addresses into prefix and sub-prefix.
  */
 
 package org.opendaylight.lispflowmapping.cassandradb.util;
@@ -43,6 +42,10 @@ public class LispAddressParseUtil {
 		macEid= address.getMacAddress().getMacAddress().getValue();
 	}
 
+	/*
+	 * prefix= last octet * 255 + second_last octet
+	 * sub-prefix= second octet*255 + first_octet
+	 */
 	private void parseIpv4Integer(String stringIp) {
 
 		int indexOne= stringIp.indexOf('.');
@@ -62,6 +65,10 @@ public class LispAddressParseUtil {
 		//System.out.println(stringIp + " -> " + prefix + "," + suffix);
 	}
 
+	/*
+	 * prefix= convert last four concatenated quads into long.
+	 * sub-prefix= convert first four conactenated quads into long.
+	 */
 	private void parseIpv6Integer(String stringIp) {
 
 		int indexOne= stringIp.indexOf(':');
