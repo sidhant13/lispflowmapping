@@ -2,14 +2,13 @@ Hashmap
 
 Add 1000	1m 49.654s
 Get 1000	0m 4.325s
-
-
+Add 10000	19m 52.371s
+Get 10000	0m 38.438s
 
 Cassandra
 
 Add 1000	1m 45.208s
 Get 1000	0m 5.957s
-
 add 10000	17m 31s
 get 10000	0m 51.794s
 
